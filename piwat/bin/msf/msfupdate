@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+# -*- coding: binary -*-
+
+# $Id: msfupdate 15952 2012-10-10 16:24:06Z rapid7 $
+# $Revision: 15952 $
+
+msfbase = __FILE__
+while File.symlink?(msfbase)
+	msfbase = File.expand_path(File.readlink(msfbase), File.dirname(msfbase))
+end
+
+@args = ARGV.dup
+
+# May be changed
+@configdir = File.expand_path(File.join(File.dirname(msfbase), "data", "svn"))
+
+Dir.chdir(File.dirname(msfbase))
+
+$stderr.puts "[*]"
+$stderr.puts "[*] Attempting to update the Metasploit Framework..."
+$stderr.puts "[*]"
+$stderr.puts ""
+
+if not (Process.uid == 0 or File.stat(msfbase).owned?)
+	$stderr.puts "[-] ERROR: User running msfupdate does not own the metasploit install"
+	$stderr.puts "Please run msfupdate as the same user who installed metasploit."
+end
+
+@args.each_with_index do |arg,i|
+	case arg
+	# Handle the old wait/nowait argument behavior
+	when "wait", "nowait"
+		@wait_index = i
+		@actually_wait = (arg == "wait")
+	# An empty or absent config-dir means a default config-dir
+	when "--config-dir"
+		@configdir_index = i
+	# A defined config dir means a defined config-dir
+	when /--config-dir=(.*)?/
+		# Spaces in the directory should be fine since this whole thing is passed
+		# as a single argument via the multi-arg syntax for system() below.
+		# TODO: Test this spaces business. I don't buy it. -todb
+		@configdir = $1
+		@configdir_index = i
+	end
+end
+
+@args[@wait_index] = nil      if @wait_index
+@args[@configdir_index] = nil if @configdir_index
+@args = @args.compact
+@args.push("--config-dir=#{@configdir}")
+@args.push("--non-interactive")
+
+res = system("svn", "cleanup")
+if res.nil?
+	$stderr.puts "[-] ERROR: Failed to run svn"
+	$stderr.puts ""
+	$stderr.puts "[-] If you used a binary installer, make sure you run the symlink in"
+	$stderr.puts "[-] /usr/local/bin instead of running this file directly (e.g.: ./msfupdate)"
+	$stderr.puts "[-] to ensure a proper environment."
+else
+	# Cleanup worked, go ahead and update
+	system("svn", "update", *@args)
+end
+
+if @actually_wait
+	$stderr.puts ""
+	$stderr.puts "[*] Please hit enter to exit"
+	$stderr.puts ""
+	$stdin.readline
+end

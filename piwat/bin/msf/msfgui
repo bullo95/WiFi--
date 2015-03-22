@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+# -*- coding: binary -*-
+#
+# $Id: msfgui 15548 2012-06-29 06:08:20Z rapid7 $
+#
+# Graphical user interface written in Java with rpc.
+#
+# $Revision: 15548 $
+#
+
+begin
+	require 'msgpack'
+rescue LoadError
+	raise LoadError, "Missing msgpack gem, try 'gem install msgpack' to use MSFGui"
+end
+
+msfbase = __FILE__
+while File.symlink?(msfbase)
+	msfbase = File.expand_path(File.readlink(msfbase), File.dirname(msfbase))
+end
+
+if RUBY_PLATFORM =~ /mswin|mingw/i
+	exec "javaw -jar #{File.dirname(msfbase)}/data/gui/msfgui.jar"
+else
+	exec "java -jar #{File.dirname(msfbase)}/data/gui/msfgui.jar"
+end

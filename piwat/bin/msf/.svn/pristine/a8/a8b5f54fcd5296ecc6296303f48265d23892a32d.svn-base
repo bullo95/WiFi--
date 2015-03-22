@@ -1,0 +1,8 @@
+This project contains a set of assembly components for proof of concept codes
+on different operating systems and architectures. These components were
+carefully designed and implemented for maximum reliability, following strict
+coding standards and requirements, such as system call invocation standards,
+position independent, register independent and zero free code. A special
+attention was put on code length when designing and implementing them,
+resulting in the most reliable and shortest codes for such purpose available
+today.
